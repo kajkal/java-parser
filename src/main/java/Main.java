@@ -1,41 +1,15 @@
-import antlr.Java8Lexer;
-import antlr.Java8Parser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-
-import java.io.IOException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Main {
-    private static final String inputDir = "src/main/resources/input/";
-
-    private static void analyzeFileStructure(String filename) {
-        System.out.println("File: '" + filename + "':");
-        try {
-            CharStream charStream = CharStreams.fromFileName(inputDir + filename);
-
-            Java8Lexer java8Lexer = new Java8Lexer(charStream);
-
-            CommonTokenStream tokens = new CommonTokenStream(java8Lexer);
-            Java8Parser parser = new Java8Parser(tokens);
-            ParseTree tree = parser.compilationUnit();
-
-            Visitor visitor = new Visitor();
-            visitor.visit(tree);
-
-            System.out.println("\n\n");
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-    }
+    private final static Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        // todo: add folder support, path to file in args[0], output file name in args[1] for example
-
-        analyzeFileStructure("Main.java");
-        analyzeFileStructure("NWD.java");
-//        analyzeFileStructure("Java8Parser.java");
+        try {
+            FileExplorer fileExplorer = new FileExplorer(args);
+            fileExplorer.parseRepository();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
     }
-
 }

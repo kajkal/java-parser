@@ -4,32 +4,50 @@ import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DataCollector {
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private static final Map<Class, String> structures = new HashMap<>();
 
     static {
         structures.put(Java8Parser.CompilationUnitContext.class, "file_content"); // highest order structure
 
-        structures.put(Java8Parser.ImportDeclarationContext.class, "import_declaration");
-        structures.put(Java8Parser.ClassDeclarationContext.class, "class_declaration");
-        structures.put(Java8Parser.MethodDeclarationContext.class, "method_declaration");
-        structures.put(Java8Parser.IfThenStatementContext.class, "if_then_statement");
-        structures.put(Java8Parser.SwitchStatementContext.class, "switch_statement");
-        structures.put(Java8Parser.WhileStatementContext.class, "while_statement");
-        structures.put(Java8Parser.ForStatementContext.class, "for_statement");
-        structures.put(Java8Parser.ReturnStatementContext.class, "return_statement");
-        structures.put(Java8Parser.TryStatementContext.class, "try_statement");
         structures.put(Java8Parser.MethodInvocationContext.class, "method_invocation");
-        // todo: any new structures implemented in Visitor class should be also mapped here
+        structures.put(Java8Parser.TryWithResourcesStatementContext.class, "try_with_resources_statement");
+        structures.put(Java8Parser.TryStatementContext.class, "try_statement");
+        structures.put(Java8Parser.ReturnStatementContext.class, "return_statement");
+        structures.put(Java8Parser.ForStatementContext.class, "for_statement");
+        structures.put(Java8Parser.DoStatementContext.class, "do_statement");
+        structures.put(Java8Parser.WhileStatementContext.class, "while_statement");
+        structures.put(Java8Parser.SwitchStatementContext.class, "switch_statement");
+        structures.put(Java8Parser.IfThenElseStatementContext.class, "if_then_else_statement");
+        structures.put(Java8Parser.IfThenStatementContext.class, "if_then_statement");
+        structures.put(Java8Parser.ConstantDeclarationContext.class, "constant_declaration");
+        structures.put(Java8Parser.InterfaceDeclarationContext.class, "interface_declaration");
+        structures.put(Java8Parser.EnumDeclarationContext.class, "enum_declaration");
+        structures.put(Java8Parser.ConstructorDeclarationContext.class, "constructor_declaration");
+        structures.put(Java8Parser.MethodDeclarationContext.class, "method_declaration");
+        structures.put(Java8Parser.FieldDeclarationContext.class, "field_declaration");
+        structures.put(Java8Parser.ClassDeclarationContext.class, "class_declaration");
+        structures.put(Java8Parser.PackageDeclarationContext.class, "package_declaration");
+        structures.put(Java8Parser.ImportDeclarationContext.class, "import_declaration");
     }
 
+    private List<DataRow> dataRows;
 
-    private static String findCodeFragment(ParseTree ctx) {
+    public DataCollector() {
+        dataRows = new ArrayList<>();
+    }
+
+    private String findCodeFragment(ParseTree ctx) {
         if (ctx instanceof TerminalNode) {
             TerminalNode node = (TerminalNode) ctx;
 
@@ -52,7 +70,7 @@ public class DataCollector {
         return builder.toString();
     }
 
-    private static String findContext(ParseTree ctx) {
+    private String findContext(ParseTree ctx) {
         for (ParseTree node = ctx.getParent(); node != null; node = node.getParent()) {
             for (Class structureClass : structures.keySet()) {
                 if (node.getClass().equals(structureClass)) {
@@ -63,14 +81,17 @@ public class DataCollector {
         return null;
     }
 
-    public void saveDataRow(ParseTree ctx) {
+    public void collectDataRow(ParseTree ctx) {
         DataRow dataRow = new DataRow();
         dataRow.setLabel(structures.get(ctx.getClass()));
         dataRow.setContext(findContext(ctx));
         dataRow.setCodeFragment(findCodeFragment(ctx).trim());
+        dataRows.add(dataRow);
+    }
 
-        // todo: save to file, collection
-        System.out.println(dataRow.toString());
+    public List<DataRow> getDataRows() {
+        log.info("Found " + dataRows.size() + " structures");
+        return dataRows;
     }
 
 }
